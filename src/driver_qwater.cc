@@ -42,8 +42,10 @@ static bool ok = registerDriver([](DriverInfo&di)
     di.setName("qwater");
     di.setMeterType(MeterType::WaterMeter);
     di.addLinkMode(LinkMode::S1);
+    di.addLinkMode(LinkMode::C1);
     di.addDetection(MANUFACTURER_QDS, 0x37,  0x33);
     di.addDetection(MANUFACTURER_QDS, 0x06,  0x18);
+    di.addDetection(MANUFACTURER_QDS, 0x07,  0x18);
 
     di.setConstructor([](MeterInfo& mi, DriverInfo& di){ return shared_ptr<Meter>(new MeterQWater(mi, di)); });
 });
@@ -53,18 +55,16 @@ MeterQWater::MeterQWater(MeterInfo &mi, DriverInfo &di) :
 {
     addNumericFieldWithExtractor(
         "total",
-        Quantity::Volume,
-        NoDifVifKey,
-        VifScaling::Auto,
-        MeasurementType::Instantaneous,
-        VIFRange::Volume,
-        StorageNr(0),
-        TariffNr(0),
-        IndexNr(1),
-        PrintProperty::JSON | PrintProperty::FIELD | PrintProperty::IMPORTANT,
         "The total water consumption recorded by this meter.",
-        SET_FUNC(total_water_consumption_m3_, Unit::M3),
-        GET_FUNC(total_water_consumption_m3_, Unit::M3));
+        PrintProperty::JSON | PrintProperty::FIELD | PrintProperty::IMPORTANT,
+        Quantity::Volume,
+        VifScaling::Auto,
+        FieldMatcher::build()
+            .set(MeasurementType::Instantaneous)
+            .set(VIFRange::Volume)
+            .set(StorageNr(0))
+            .set(TariffNr(0))
+            .set(IndexNr(1)));
 
     addNumericFieldWithExtractor(
         "due_date",
